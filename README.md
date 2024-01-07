@@ -22,6 +22,28 @@ TODO - How does it work?
 ./PROJECT_NAME argument1 argument2
 ```
 
+## Testing
+
+Make sure to setup the googletest submodule before running the tests.
+
+```bash
+git submodule init
+```
+
+To make the test file enter the following command:
+
+```bash
+make test
+```
+
+To run the tests, execute the `test` file
+
+
+```bash
+./test
+```
+
+
 ## The Core Team
 
 Mammadu, Papa, Alan

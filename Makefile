@@ -28,8 +28,21 @@ $(TARGET): $(SRC_OBJ) $(LIB_OBJ)
 	gcc $(CFLAGS) $(SRC_OBJ) $(LIB_OBJ) -o $(TARGET)
 
 # Make the test executable
-$(TEST): $(TEST_OBJ) $(LIB_OBJ)
-	gcc $(CFLAGS) $(TEST_OBJ) $(LIB_OBJ) -o $(TEST)
+$(TEST): $(TEST_OBJ) $(LIB_OBJ) $(LIB_DIR)/gtest_main.a
+	g++ -isystem ./submodules/googletest/googletest/include/ $(LIB_DIR)/gtest_main.a $(OBJ_DIR)/test.o -o test
+
+$(TEST_OBJ):
+	g++ -isystem ./submodules/googletest/googletest/include/ -c $(TEST_DIR)/test.c -o $(OBJ_DIR)/test.o
+
+$(LIB_DIR)/gtest_main.a: $(OBJ_DIR)/gtest-all.o $(OBJ_DIR)/gtest_main.o
+	ar rs $(LIB_DIR)/gtest_main.a $(OBJ_DIR)/gtest-all.o $(OBJ_DIR)/gtest_main.o
+
+$(OBJ_DIR)/gtest-all.o:
+	g++ -isystem ./submodules/googletest/googletest/include/ -I ./submodules/googletest/googletest/ -c ./submodules/googletest/googletest/src/gtest-all.cc -o $(OBJ_DIR)/gtest-all.o
+
+$(OBJ_DIR)/gtest_main.o:
+	g++ -isystem ./submodules/googletest/googletest/include/ -I ./submodules/googletest/googletest/ -c ./submodules/googletest/googletest/src/gtest_main.cc -o $(OBJ_DIR)/gtest_main.o
+
 
 # Make the object files from library files
 $(OBJ_DIR)/%.o: $(LIB_DIR)/%.c
@@ -39,14 +52,11 @@ $(OBJ_DIR)/%.o: $(LIB_DIR)/%.c
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	gcc $(CFLAGS) -c $< -o $@
 
-# Make the object files from test files
-$(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
-	gcc $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJ_DIR)/*.o *.o *.a
 
 fclean: clean
-	rm -f $(TARGET) $(TEST)
+	rm -f $(TARGET) $(TEST) $(LIB_DIR)/*.a
 
 re: fclean all

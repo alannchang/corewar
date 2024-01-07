@@ -44,7 +44,7 @@ $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
 	gcc $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ_DIR)/*.o *.o
+	rm -f $(OBJ_DIR)/*.o *.o *.a
 
 fclean: clean
 	rm -f $(TARGET) $(TEST)

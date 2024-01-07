@@ -15,6 +15,9 @@ TEST_DIR = tests
 TEST_SRC = $(wildcard $(TEST_DIR)/*.c) # list all the test files
 TEST_OBJ = $(patsubst $(TEST_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_SRC)) # list all the test object files
 
+SUB_MOD_DIR = submodules
+GTEST_DIR = $(SUB_MOD_DIR)/googletest/googletest
+
 INC_DIR = include
 
 # CFLAGS = -Wall -Wextra -g3 -Werror
@@ -29,19 +32,19 @@ $(TARGET): $(SRC_OBJ) $(LIB_OBJ)
 
 # Make the test executable
 $(TEST): $(TEST_OBJ) $(LIB_OBJ) $(LIB_DIR)/gtest_main.a
-	g++ -isystem ./submodules/googletest/googletest/include/ $(LIB_DIR)/gtest_main.a $(OBJ_DIR)/test.o -o test
+	g++ -isystem $(GTEST_DIR)/include/ $(LIB_DIR)/gtest_main.a $(OBJ_DIR)/test.o -o test
 
 $(TEST_OBJ):
-	g++ -isystem ./submodules/googletest/googletest/include/ -c $(TEST_DIR)/test.c -o $(OBJ_DIR)/test.o
+	g++ -isystem $(GTEST_DIR)/include/ -c $(TEST_DIR)/test.c -o $(OBJ_DIR)/test.o
 
 $(LIB_DIR)/gtest_main.a: $(OBJ_DIR)/gtest-all.o $(OBJ_DIR)/gtest_main.o
 	ar rs $(LIB_DIR)/gtest_main.a $(OBJ_DIR)/gtest-all.o $(OBJ_DIR)/gtest_main.o
 
 $(OBJ_DIR)/gtest-all.o:
-	g++ -isystem ./submodules/googletest/googletest/include/ -I ./submodules/googletest/googletest/ -c ./submodules/googletest/googletest/src/gtest-all.cc -o $(OBJ_DIR)/gtest-all.o
+	g++ -isystem $(GTEST_DIR)/include/ -I $(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc -o $(OBJ_DIR)/gtest-all.o
 
 $(OBJ_DIR)/gtest_main.o:
-	g++ -isystem ./submodules/googletest/googletest/include/ -I ./submodules/googletest/googletest/ -c ./submodules/googletest/googletest/src/gtest_main.cc -o $(OBJ_DIR)/gtest_main.o
+	g++ -isystem $(GTEST_DIR)/include/ -I $(GTEST_DIR) -c $(GTEST_DIR)/src/gtest_main.cc -o $(OBJ_DIR)/gtest_main.o
 
 
 # Make the object files from library files

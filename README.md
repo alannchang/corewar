@@ -1,7 +1,7 @@
 # corewar
 
 ***
-asdfa
+
 ## Task
 
 TODO - What is the problem? And where is the challenge?
@@ -46,7 +46,7 @@ To run the tests, execute the `test` file
 
 ## The Core Team
 
-Mammadu, Papa, Alan
+Mammadu Diallo, Papa, Alan
 
 ## TODO
 

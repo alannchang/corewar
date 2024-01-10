@@ -46,7 +46,7 @@ To run the tests, execute the `test` file
 
 ## The Core Team
 
-Mammadu, Papa, Alan
+Mammadu Diallo, Papa, Alan
 
 ## TODO
 

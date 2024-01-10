@@ -34,7 +34,7 @@ $(TARGET): $(SRC_OBJ) $(LIB_OBJ)
 $(TEST): $(TEST_OBJ) $(LIB_OBJ) $(LIB_DIR)/gtest_main.a
 	g++ -isystem $(GTEST_DIR)/include/ $(LIB_DIR)/gtest_main.a $(OBJ_DIR)/test.o -o test
 
-$(TEST_OBJ):
+$(TEST_OBJ): $(TEST_SRC)
 	g++ -isystem $(GTEST_DIR)/include/ -c $(TEST_DIR)/test.c -o $(OBJ_DIR)/test.o
 
 $(LIB_DIR)/gtest_main.a: $(OBJ_DIR)/gtest-all.o $(OBJ_DIR)/gtest_main.o

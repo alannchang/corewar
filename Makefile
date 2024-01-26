@@ -1,4 +1,4 @@
-TARGET = my_project
+TARGET = assembler
 TEST = test
 
 OBJ_DIR = obj

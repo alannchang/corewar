@@ -26,22 +26,28 @@ Loop until EOF:
 
 */
 
+scan init_scan(char *prog_name){
+    FILE *prog_fp = fopen(prog_name, "r");
+    if (prog_fp == NULL){
+        write(2, "Error opening file\n", 19);
+        exit(EXIT_FAILURE);
+    }
+
+    scan scan = {
+        .file_name = prog_name,
+        .line_ct = 0,
+        .fp = prog_fp,
+        .buf = 0,
+        .line = NULL,
+    };
+    return scan;
+}
+
+
 int main(int ac, char **av){
     if (ac == 2){
 
-        FILE *prog_fp = fopen(av[1], "r");
-        if (prog_fp == NULL){
-            write(2, "Error opening file\n", 19);
-            exit(EXIT_FAILURE);
-        }
-
-        scan scan = {
-            .file_name = av[1],
-            .line_ct = 0,
-            .fp = prog_fp,
-            .buf = 0,
-            .line = NULL,
-        };
+        scan scan = init_scan(av[1]);
 
         int exec_fd = open("exec_file", O_CREAT | O_WRONLY | O_TRUNC);
         if (exec_fd == -1){

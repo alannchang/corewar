@@ -4,7 +4,7 @@
 #include<unistd.h>
 
 typedef struct scanner {
-    char *file_name;
+    const char *file_name;
     int line_ct;
     FILE *fp;
     size_t buf;

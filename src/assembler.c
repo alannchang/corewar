@@ -28,22 +28,24 @@ Loop until EOF:
 
 */
 
-scan init_scan(char *prog_name){
+prog init_prog(const char *prog_name){
     FILE *prog_fp = fopen(prog_name, "r");
     if (prog_fp == NULL){
         write(2, "Error opening file\n", 19);
         exit(EXIT_FAILURE);
     }
 
-    scan scan = {
+    prog prog = {
         .file_name = prog_name,
         .line_ct = 0,
         .fp = prog_fp,
         .buf = 0,
         .line = NULL,
     };
-    return scan;
+    return prog;
 }
+
+/////////////////////////////////// TOKEN/LIST MANAGEMENT ///////////////////////////////////
 
 void init_list(token_list *list){
     list->head = NULL;
@@ -65,7 +67,7 @@ void add_new_token(token_list *list, char *read_str){
     }
 
     new_token->next = NULL;
-    if (list->head == NULL){
+    if (list->head == NULL){ // empty list
         list->head = new_token;
         list->tail = new_token;
     } else {
@@ -74,8 +76,8 @@ void add_new_token(token_list *list, char *read_str){
     }
 }
 
-void freeList(token *head) {
-    while (head != NULL) {
+void freeList(token *head){
+    while (head != NULL){
         token *temp = head;
         head = head->next;
         free(temp->str);
@@ -83,11 +85,51 @@ void freeList(token *head) {
     }
 }
 
+/////////////////////////////////// SCANNER ///////////////////////////////////
+
+int scan_line(token_list *list, char *read_str){
+    char *ptr = read_str;
+
+    while (*ptr != '\0' && *ptr != '\n'){
+        if (*ptr != ' '){
+
+            size_t tmp_mem = 1;
+            char *tmp = (char *)malloc(tmp_mem);
+            if (tmp == NULL){
+                write(2, "Error allocating memory\n", 24);
+                exit(EXIT_FAILURE);
+            }
+
+            tmp[0] = '\0';
+
+            while (*ptr != ' ' && *ptr != '\0' && *ptr != '\n'){
+                tmp_mem++;
+                tmp = (char *)realloc(tmp, tmp_mem);
+                if (tmp == NULL){
+                    write(2, "Error allocating memory\n", 24);
+                    exit(EXIT_FAILURE);
+                }
+
+                tmp[tmp_mem - 2] = *ptr;
+                tmp[tmp_mem - 1] = '\0'; 
+          
+                ptr++;
+            }
+
+            add_new_token(list, tmp);
+            free(tmp);
+            printf("%s\n", list->tail->str); // DEBUG PRINT
+
+        }
+        ptr++;
+    }
+    return 0;
+}
 
 int main(int ac, char **av){
     if (ac == 2){
 
-        scan scan = init_scan(av[1]);
+        prog prog = init_prog(av[1]);
 
         int exec_fd = open("exec_file", O_CREAT | O_WRONLY | O_TRUNC, 0644);
         if (exec_fd == -1){
@@ -100,23 +142,23 @@ int main(int ac, char **av){
         ssize_t read;
 
         while(1){
-            read = getline(&scan.line, &scan.buf, scan.fp);
+            read = getline(&prog.line, &prog.buf, prog.fp);
             if (read == -1){
                 break;
             }
-            scan.line_ct++;
+            prog.line_ct++;
 
-            add_new_token(&token_list, scan.line);
-            // printf("%d/%ld: %s", scan.line_ct, read, token_list.tail->str);
-            printf("%s", token_list.tail->str);
-            write(exec_fd, scan.line, read);
+
+            scan_line(&token_list, prog.line);
+
+            write(exec_fd, prog.line, read);
         }  
 
-        fclose(scan.fp);
+        fclose(prog.fp);
         if (close(exec_fd) == -1){
             write(2, "Error closing file\n", 19);
         }
-        free(scan.line);
+        free(prog.line);
         freeList(token_list.head);
     }
     exit(EXIT_SUCCESS);

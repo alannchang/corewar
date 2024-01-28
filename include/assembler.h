@@ -4,31 +4,36 @@
 #include <unistd.h>
 #include <string.h> // replace with original implementations
 
-typedef struct scanner {
+typedef struct program {
     const char *file_name;
     int line_ct;
     FILE *fp;
     size_t buf;
     char *line;
-} scan;
+} prog;
 
 typedef struct token{
     int id;
     char *str;
+    int len;
     struct token *next;
 } token;
 
-typedef struct {
+typedef struct token_list{
     token *head;
     token *tail;
 } token_list;
 
+// not sure if this is needed
 enum token_types{
     REGISTER,
     INSTRUCTION,
     PARAMETER,
     INDEX,
-    LABEL,
+    LABEL, // begin with ':'
+    COMMENT, // begin with '#'
+    SEPARATOR, // ','
+    DIRECT, // begin with '%'
     // Single chars
     LEFT_PARENTHESIS,
     RIGHT_PARENTHESIS,

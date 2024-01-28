@@ -28,24 +28,7 @@ Loop until EOF:
 
 */
 
-prog init_prog(const char *prog_name){
-    FILE *prog_fp = fopen(prog_name, "r");
-    if (prog_fp == NULL){
-        write(2, "Error opening file\n", 19);
-        exit(EXIT_FAILURE);
-    }
-
-    prog prog = {
-        .file_name = prog_name,
-        .line_ct = 0,
-        .fp = prog_fp,
-        .buf = 0,
-        .line = NULL,
-    };
-    return prog;
-}
-
-/////////////////////////////////// TOKEN/LIST MANAGEMENT ///////////////////////////////////
+////////// TOKEN/LIST MANAGEMENT //////////
 
 void init_list(token_list *list){
     list->head = NULL;
@@ -85,13 +68,21 @@ void freeList(token *head){
     }
 }
 
-/////////////////////////////////// SCANNER ///////////////////////////////////
+////////// SCANNER //////////
 
 int scan_line(token_list *list, char *read_str){
     char *ptr = read_str;
 
-    while (*ptr != '\0' && *ptr != '\n'){
+    while (*ptr != '\0' && *ptr != '\n'){ // beginning of the line
         if (*ptr != ' '){
+
+            if (*ptr == COMMENT_CHAR){ // this ignores comments
+                break;
+            }
+
+            if (*ptr == '"'){ // string literals
+
+            }
 
             size_t tmp_mem = 1;
             char *tmp = (char *)malloc(tmp_mem);
@@ -117,7 +108,9 @@ int scan_line(token_list *list, char *read_str){
             }
 
             add_new_token(list, tmp);
-            free(tmp);
+            if (tmp != NULL){
+                free(tmp);
+            }
             printf("%s\n", list->tail->str); // DEBUG PRINT
 
         }
@@ -125,6 +118,39 @@ int scan_line(token_list *list, char *read_str){
     }
     return 0;
 }
+
+////////// GENERAL //////////
+
+prog init_prog(const char *prog_name){
+    FILE *prog_fp = fopen(prog_name, "r");
+    if (prog_fp == NULL){
+        write(2, "Error opening file\n", 19);
+        exit(EXIT_FAILURE);
+    }
+
+    prog prog = {
+        .file_name = prog_name,
+        .line_ct = 0,
+        .fp = prog_fp,
+        .buf = 0,
+        .line = NULL,
+    };
+    return prog;
+}
+
+void wrap_up(prog prog, int exec_fd, token_list *list){
+    fclose(prog.fp);
+    if (close(exec_fd) == -1){
+        write(2, "Error closing file\n", 19);
+    }
+    
+    if (prog.line != NULL){
+        free(prog.line);
+    }
+
+    freeList(list->head);
+}
+
 
 int main(int ac, char **av){
     if (ac == 2){
@@ -154,12 +180,9 @@ int main(int ac, char **av){
             write(exec_fd, prog.line, read);
         }  
 
-        fclose(prog.fp);
-        if (close(exec_fd) == -1){
-            write(2, "Error closing file\n", 19);
-        }
-        free(prog.line);
-        freeList(token_list.head);
+        ////////// END OF PROGRAM WRAP UP //////////
+        wrap_up(prog, exec_fd, &token_list);
+        
     }
     exit(EXIT_SUCCESS);
 }

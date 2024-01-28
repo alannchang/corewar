@@ -1,8 +1,17 @@
+#ifndef ASSEMBLER_H
+#define ASSEMBLER_H
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h> // replace with original implementations
+
+// Taken from op.h -- Do I need header guards?
+#define COMMENT_CHAR '#'
+#define LABEL_CHAR ':'
+#define DIRECT_CHAR '%'
+#define SEPARATOR_CHAR ','
 
 typedef struct program {
     const char *file_name;
@@ -43,3 +52,5 @@ enum token_types{
     RIGHT_BRACE,
     EQUAL,
 };
+
+#endif

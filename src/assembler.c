@@ -138,51 +138,98 @@ prog init_prog(const char *prog_name){
     return prog;
 }
 
-void wrap_up(prog prog, int exec_fd, token_list *list){
+char *generate_exec_name(char *av){ // THIS FUNCTION NEEDS TO BE REFACTORED PROBABLY
+    char *exec_name = strdup(av);
+
+    int i = 0;
+    while(exec_name[i] != '\0'){
+        if (exec_name[i] == '.'){
+            exec_name = (char *)realloc(exec_name, i + strlen(EXECUTABLE_EXT) + 1);
+            int j = 0;
+            while(EXECUTABLE_EXT[j] != '\0'){
+                exec_name[i] = EXECUTABLE_EXT[j];
+                i++;
+                j++;
+            }
+            exec_name[i] = '\0';
+            return exec_name;
+        }
+        i++;
+    }
+    exec_name[i] = '.';
+    exec_name = (char *)realloc(exec_name, i + strlen(EXECUTABLE_EXT) + 1);
+    int j = 0;
+    while(EXECUTABLE_EXT[j] != '\0'){
+        exec_name[i] = EXECUTABLE_EXT[j];
+        i++;
+        j++;
+    }
+    exec_name[i] = '\0';
+    return exec_name;
+}
+
+exec init_exec(char *av){
+    exec exec = {
+        .file_name = generate_exec_name(av),
+        .fd = open(exec.file_name, O_CREAT | O_WRONLY | O_TRUNC, 0644),
+    };
+    if (exec.fd == -1){
+        write(2, "Error writing file\n", 19);
+        exit(EXIT_FAILURE);
+    }
+    return exec;
+}
+
+void wrap_up(prog prog, exec exec, token_list *list){
     fclose(prog.fp);
-    if (close(exec_fd) == -1){
+    if (close(exec.fd) == -1){
         write(2, "Error closing file\n", 19);
     }
     
-    if (prog.line != NULL){
+    if (prog.line){
         free(prog.line);
+    }
+
+    if (exec.file_name){
+        free(exec.file_name);
     }
 
     freeList(list->head);
 }
 
+int assemble_prog(char *av){
+    prog prog = init_prog(av);
+    exec exec = init_exec(av);
+
+    token_list token_list;
+    init_list(&token_list);
+    ssize_t read;
+
+    while(1){
+        read = getline(&prog.line, &prog.buf, prog.fp);
+        if (read == -1){
+            break;
+        }
+        prog.line_ct++;
+
+
+        scan_line(&token_list, prog.line);
+
+        write(exec.fd, prog.line, read);
+    }  
+
+    wrap_up(prog, exec, &token_list);
+    return 0;        
+}
+
 
 int main(int ac, char **av){
-    if (ac == 2){
-
-        prog prog = init_prog(av[1]);
-
-        int exec_fd = open("exec_file", O_CREAT | O_WRONLY | O_TRUNC, 0644);
-        if (exec_fd == -1){
-            write(2, "Error writing file\n", 19);
-            exit(EXIT_FAILURE);
+    if (ac > 1){
+        for (int i = 1; i < ac; i++){
+            assemble_prog(av[i]);
         }
-
-        token_list token_list;
-        init_list(&token_list);
-        ssize_t read;
-
-        while(1){
-            read = getline(&prog.line, &prog.buf, prog.fp);
-            if (read == -1){
-                break;
-            }
-            prog.line_ct++;
-
-
-            scan_line(&token_list, prog.line);
-
-            write(exec_fd, prog.line, read);
-        }  
-
-        ////////// END OF PROGRAM WRAP UP //////////
-        wrap_up(prog, exec_fd, &token_list);
-        
+        exit(EXIT_SUCCESS);
     }
-    exit(EXIT_SUCCESS);
+    write(2, "GIMME SOMETHING TO ASSEMBLE\n", 28);
+    exit(EXIT_FAILURE);
 }

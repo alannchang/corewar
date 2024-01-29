@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <string.h> // replace with original implementations
 
+#define EXECUTABLE_EXT ".cor"
+
 // Taken from op.h -- Do I need header guards?
 #define COMMENT_CHAR '#'
 #define LABEL_CHAR ':'
@@ -20,6 +22,11 @@ typedef struct program {
     size_t buf;
     char *line;
 } prog;
+
+typedef struct executable {
+    char *file_name;
+    int fd;
+} exec;
 
 typedef struct token{
     int id;

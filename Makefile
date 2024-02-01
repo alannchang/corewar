@@ -1,4 +1,4 @@
-TARGET = assembler
+TARGET = asm
 TEST = test
 
 OBJ_DIR = obj

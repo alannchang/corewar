@@ -40,19 +40,76 @@ void init_list(token_list *list){
     list->err_msg = NULL;
 }
 
-// int id_validate(token_list *list){
-//     char *str = list->tail->str;
-//     size_t len = list->tail->len;
-//     for (int i = 0; i < len; i++){
-//         switch(read_str[0]){
-//             case DIRECTIVE_CHAR: // check strlen > 1, position is at beginning, check if ".name" or ".comment"
-//             case DIRECT_CHAR: // check strlen > 1, position is at beginning
+int validate_label(const char *str){
 
-//             default:
-//         }
-//     }
-//     return 0;
-// }
+    while (*str != LABEL_CHAR){
+        bool found = false;
+
+        for (const char *allowed = LABEL_CHARS; *allowed != LABEL_CHAR; allowed++) {
+            if (*str == *allowed){
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return -1;
+        }
+        str++;
+    }
+    return 0;
+}
+
+int validate_reg(const char *str){
+    str++;
+    while(*str != '\0'){
+        if (!isdigit(*str)){
+            return -1; // should add a way to check if valid register number
+        }
+        str++;
+    }
+    return 0;
+}
+
+int id_validate(token_list *list){
+    char *str = list->tail->str;
+    size_t len = list->tail->len;
+
+    switch(str[0]){
+        case DIRECTIVE_CHAR: 
+            list->tail->id = DIRECTIVE;
+            return 0;
+        case DIRECT_CHAR: 
+            list->tail->id = DIRECT;
+            return 0;
+        case 'r':
+            if (isdigit(str[1])){
+                list->tail->id = REGISTER;
+                if (validate_reg(str) != 0){
+                    return -1;
+                }
+                return 0;
+            }
+    }
+
+    if (str[len - 1] == LABEL_CHAR){
+        list->tail->id = LABEL;
+        if (validate_label(str) != 0){
+            return -1;
+        }
+        return 0;
+    }
+
+    for (int i = 0; temp_op_tab[i].instr != 0; i++){
+        if (strcmp(temp_op_tab[i].instr, str) == 0){
+            list->tail->id = INSTRUCTION;
+            list->tail->num_args = temp_op_tab[i].nbr_args;
+        }
+    }
+    
+
+    return 0;
+}
 
 void add_token(token_list *list, char *read_str){
     token *new_token = malloc(sizeof(token));
@@ -61,8 +118,10 @@ void add_token(token_list *list, char *read_str){
         exit(EXIT_FAILURE);
     }
 
-    new_token->len = strlen(read_str);
+    new_token->id = -1;
     new_token->str = strdup(read_str);  // use strndup instead??
+    new_token->len = strlen(read_str);
+    new_token->num_args = 0;
 
     if (new_token->str == NULL){
         write(2, "Error allocating memory\n", 24);
@@ -78,7 +137,7 @@ void add_token(token_list *list, char *read_str){
         list->tail = new_token;
     }
 
-    // id_validate(list);
+    id_validate(list);
 
 }
 
@@ -95,6 +154,7 @@ void free_list(token *head){
 
 int scan_line(token_list *list, char *read_str){
     char *ptr = read_str;
+    bool str_found = false;
 
     while (*ptr != '\0' && *ptr != '\n'){ // beginning of the line
         if (*ptr != ' ' && *ptr != TAB_CHAR){
@@ -113,6 +173,7 @@ int scan_line(token_list *list, char *read_str){
             tmp[0] = '\0';
 
             if (*ptr == DOUBLE_QUOTE){
+                str_found = true;
                 ptr++;
                 while (*ptr != DOUBLE_QUOTE){ // will run into problems with multi line strings
                     tmp_mem++;
@@ -128,6 +189,7 @@ int scan_line(token_list *list, char *read_str){
                     ptr++;
                 }
             } else {
+
                 while (*ptr != ' ' && *ptr != TAB_CHAR && *ptr != SEPARATOR_CHAR && *ptr != '\0' && *ptr != '\n'){ // tokenize
                     tmp_mem++;
                     tmp = (char *)realloc(tmp, tmp_mem);
@@ -147,7 +209,10 @@ int scan_line(token_list *list, char *read_str){
             if (tmp != NULL){
                 free(tmp);
             }
-            printf("%s\n", list->tail->str); // DEBUG PRINT
+            if (str_found){
+                list->tail->id = LITERAL;
+            }
+            printf("%s id = %d args = %d\n", list->tail->str, list->tail->id, list->tail->num_args); // DEBUG PRINT
 
         }
         ptr++;

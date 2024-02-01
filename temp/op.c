@@ -23,3 +23,5 @@ const op_t op_tab[] = {
   {"aff", 1, {T_REG}, 16, 2, inst_aff},
   {0, 0, {0}, 0, 0, 0}
 };
+
+

@@ -17,6 +17,8 @@
 #define EXECUTABLE_EXT ".cor"
 #define DIRECTIVE_CHAR '.'
 
+#define UNREQ_DIR "Unrecognized directive, please use .name or .comment only"
+
 typedef struct source {
     const char *file_name;
     int line_num;
@@ -27,7 +29,7 @@ typedef struct source {
 
 typedef struct executable {
     char *file_name;
-    int fd;
+    FILE *fp;
 } exec;
 
 typedef struct token{
@@ -51,7 +53,7 @@ enum token_id {
     INSTRUCTION,    // live
     REGISTER,       // r1
     INDEX,          // 123
-    LABEL,          // :l2
+    LABEL,          // l2:
     DIRECT,         // %1
 };
 

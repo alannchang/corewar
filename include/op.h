@@ -65,10 +65,10 @@ extern const op_t op_tab[];
 #define COMMENT_LENGTH 2048
 #define COREWAR_EXEC_MAGIC 0xea83f3
 typedef struct header_s {
-  int magic;
-  char prog_name[PROG_NAME_LENGTH + 1];
-  int prog_size;
-  char comment[COMMENT_LENGTH + 1];
+  int magic;                            // total = 4
+  char prog_name[PROG_NAME_LENGTH + 1]; //       = 4 + (128 + 4)
+  int prog_size;                        //       = 4 + (128 + 4) + 4
+  char comment[COMMENT_LENGTH + 1];     //       = 4 + (128 + 4) + 4 + (2048 + 4)
 } header_t;
 /* live */
 #define MAX_CHAMPIONS 4

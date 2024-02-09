@@ -14,9 +14,8 @@ Authorized Functions
 ● realloc
 ● free
 ● exit
-*/
 
-/*
+
 Code Outline:
 
 Loop until EOF:
@@ -25,22 +24,24 @@ Loop until EOF:
  +tokenize, delimiting all whitespaces and newline chars
  +classify tokens using ID numbers
  +validate tokens
- +break loop if invalid tokens found, write error to stderr 
+ +break loop if invalid tokens found, write error to stderr, end program
 
 Write to executable:
+-Write header(magic, prog_name, prog_size, comment)
 -Translate tokens to machine code (binary or hexdecimal)
 
 */
 
-////////// TOKEN/LIST MANAGEMENT //////////
+////////// CLASSIFICATION AND VALIDATION //////////
 
-void init_list(token_list *list){
-    list->head = NULL;
-    list->tail = NULL;
-    list->err_msg = NULL;
+int is_valid_dir(const char *str){
+    if (strcmp(str, ".name") && strcmp(str, ".comment")){
+        return -1;
+    }
+    return 0;
 }
 
-int validate_label(const char *str){
+int is_valid_label(const char *str){
 
     while (*str != LABEL_CHAR){
         bool found = false;
@@ -60,7 +61,7 @@ int validate_label(const char *str){
     return 0;
 }
 
-int validate_reg(const char *str){
+int is_valid_reg(const char *str){
     str++;
     while(*str != '\0'){
         if (!isdigit(*str)){
@@ -78,6 +79,9 @@ int id_validate(token_list *list){
     switch(str[0]){
         case DIRECTIVE_CHAR: 
             list->tail->id = DIRECTIVE;
+            if (!is_valid_dir(str)){
+                return -1;
+            }
             return 0;
         case DIRECT_CHAR: 
             list->tail->id = DIRECT;
@@ -85,7 +89,7 @@ int id_validate(token_list *list){
         case 'r':
             if (isdigit(str[1])){
                 list->tail->id = REGISTER;
-                if (validate_reg(str) != 0){
+                if (is_valid_reg(str) != 0){
                     return -1;
                 }
                 return 0;
@@ -94,21 +98,28 @@ int id_validate(token_list *list){
 
     if (str[len - 1] == LABEL_CHAR){
         list->tail->id = LABEL;
-        if (validate_label(str) != 0){
+        if (is_valid_label(str) != 0){
             return -1;
         }
         return 0;
     }
 
-    for (int i = 0; temp_op_tab[i].instr != 0; i++){
+    for (int i = 0; temp_op_tab[i].instr != 0; i++){ // check for instruction match
         if (strcmp(temp_op_tab[i].instr, str) == 0){
             list->tail->id = INSTRUCTION;
             list->tail->num_args = temp_op_tab[i].nbr_args;
         }
     }
     
-
     return 0;
+}
+
+////////// LIST MANAGEMENT //////////
+
+void init_list(token_list *list){
+    list->head = NULL;
+    list->tail = NULL;
+    list->err_msg = NULL;
 }
 
 void add_token(token_list *list, char *read_str){
@@ -136,9 +147,7 @@ void add_token(token_list *list, char *read_str){
         list->tail->next = new_token;
         list->tail = new_token;
     }
-
     id_validate(list);
-
 }
 
 void free_list(token *head){
@@ -220,24 +229,7 @@ int scan_line(token_list *list, char *read_str){
     return 0;
 }
 
-////////// GENERAL //////////
-
-src init_src(const char *src_name){
-    FILE *src_fp = fopen(src_name, "r");
-    if (src_fp == NULL){
-        write(2, "Error opening file\n", 19);
-        exit(EXIT_FAILURE);
-    }
-
-    src src = {
-        .file_name = src_name,
-        .line_num = 0,
-        .fp = src_fp,
-        .buf = 0,
-        .line = NULL,
-    };
-    return src;
-}
+////////// EXECUTABLE //////////
 
 char *generate_exec_name(char *av){ // THIS FUNCTION NEEDS TO BE REFACTORED PROBABLY
     char *exec_name = strdup(av); // use strndup instead??
@@ -272,18 +264,86 @@ char *generate_exec_name(char *av){ // THIS FUNCTION NEEDS TO BE REFACTORED PROB
 exec init_exec(char *av){
     exec exec = {
         .file_name = generate_exec_name(av),
-        .fd = open(exec.file_name, O_CREAT | O_WRONLY | O_TRUNC, 0644), // consider using fopen() with "wb" to write binary?
+        .fp = fopen(exec.file_name, "wb"), // consider using fopen() with "wb" to write binary?
     };
-    if (exec.fd == -1){
+    if (exec.fp == NULL){
         write(2, "Error writing file\n", 19);
         exit(EXIT_FAILURE);
     }
     return exec;
 }
+////////// WRITING THE EXECUTABLE //////////
+
+unsigned int swap_endian(unsigned int value) {
+    return ((value >> 24) & 0x000000FF) |
+           ((value >> 8) & 0x0000FF00) |
+           ((value << 8) & 0x00FF0000) |
+           ((value << 24) & 0xFF000000);
+}
+
+int write_header(exec exec, token *ptr){
+    
+    // Magic
+    unsigned int magic[] = {swap_endian(COREWAR_EXEC_MAGIC)};
+    if (!fwrite(magic, sizeof(unsigned int), 1, exec.fp)){
+        return -1;
+    }
+    
+    // .name
+    if (!strcmp(ptr->str, ".name")){
+        ptr = ptr->next;
+        if (ptr->id == 1){
+            fwrite(ptr->str, sizeof(char), ptr->len, exec.fp);
+        }
+    } else {
+        return -1;
+    }
+
+    
+    // NULL
+
+
+    // .comment
+
+
+    // NULL
+
+    return 0;
+}
+
+// int write_body(exec exec, token_list){
+
+
+// }
+
+int write_exec(exec exec, token *ptr){
+    write_header(exec, ptr);
+
+    return 0;
+}
+
+////////// GENERAL //////////
+
+src init_src(const char *src_name){
+    FILE *src_fp = fopen(src_name, "r");
+    if (src_fp == NULL){
+        write(2, "Error opening file\n", 19);
+        exit(EXIT_FAILURE);
+    }
+
+    src src = {
+        .file_name = src_name,
+        .line_num = 0,
+        .fp = src_fp,
+        .buf = 0,
+        .line = NULL,
+    };
+    return src;
+}
 
 void wrap_up(src src, exec exec, token_list *list){
     fclose(src.fp);
-    if (close(exec.fd) == -1){
+    if (fclose(exec.fp) == EOF){
         write(2, "Error closing file\n", 19);
     }
     
@@ -301,8 +361,8 @@ void wrap_up(src src, exec exec, token_list *list){
 int scan_src(char *av){
     src src = init_src(av);
 
-    token_list token_list;
-    init_list(&token_list);
+    token_list list;
+    init_list(&list);
     ssize_t read;
 
     while(1){
@@ -314,13 +374,24 @@ int scan_src(char *av){
 
 
         // TOKENIZE/IDENTIFY
-        scan_line(&token_list, src.line);
+        scan_line(&list, src.line);
          
-    }  
+    }
+    if (list.err_msg != NULL){
+        write(2, list.err_msg, strlen(list.err_msg));
+        exit(EXIT_FAILURE);
+    }
+
     // WRITE EXECUTABLE AFTER VALIDATING SRC FILE, TOKENS, ETC.
     exec exec = init_exec(av);
-    // write(exec.fd, src.line, read); // use fwrite() if using fopen()
-    wrap_up(src, exec, &token_list);
+    token *ptr = list.head;    
+    write_exec(exec, ptr);
+
+
+    
+
+
+    wrap_up(src, exec, &list);
     return 0;        
 }
 
@@ -328,7 +399,6 @@ bool valid_asm_name(const char *file_name){
     size_t len = strlen(file_name);
     return (len > 2 && file_name[len - 1] == 's' && file_name[len - 2] == '.');
 }
-
 
 int main(int ac, char **av){
     if (ac == 2 && valid_asm_name(av[1])){

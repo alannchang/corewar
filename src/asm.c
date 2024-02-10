@@ -281,6 +281,18 @@ unsigned int swap_endian(unsigned int value) {
            ((value << 24) & 0xFF000000);
 }
 
+int write_zero_byte(int num_bytes, exec exec){
+    unsigned char *arr = (unsigned char *)malloc(num_bytes * sizeof(unsigned char));
+    if (arr == NULL){
+        write(2, "Error allocating memory\n", 24);
+        return 1;
+    }
+    memset(arr, 0, num_bytes * sizeof(unsigned char));
+    fwrite(arr, sizeof(unsigned char), num_bytes, exec.fp);
+    free(arr);
+    return 0;
+}
+
 int write_header(exec exec, token *ptr){
     
     // Magic
@@ -290,14 +302,28 @@ int write_header(exec exec, token *ptr){
     }
     
     // .name
-    if (!strcmp(ptr->str, ".name")){
+    if (strcmp(ptr->str, ".name") == 0 && ptr->next->id == LITERAL){
         ptr = ptr->next;
-        if (ptr->id == 1){
-            fwrite(ptr->str, sizeof(char), ptr->len, exec.fp);
-        }
+        fwrite(ptr->str, sizeof(char), ptr->len, exec.fp);
+        int name_padding = PROG_NAME_LENGTH + 4 - (ptr->len);
+        write_zero_byte(name_padding, exec);
     } else {
         return -1;
     }
+
+    write_zero_byte(4, exec); // replace this with prog_size??
+
+    if (strcmp(ptr->next->str, ".comment") == 0 && ptr->next->next->id == LITERAL){
+        ptr = ptr->next->next;
+        fwrite(ptr->str, sizeof(char), ptr->len, exec.fp);
+        int comment_padding = COMMENT_LENGTH + 4 - (ptr->len);
+        write_zero_byte(comment_padding, exec);
+    } else {
+        return -1;
+    }
+
+
+
 
     
     // NULL

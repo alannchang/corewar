@@ -1,5 +1,5 @@
-#include "../include/asm.h"
-#include "../include/op.h"
+#include "../inc/asm.h"
+#include "../inc/op.h"
 
 /*
 Authorized Functions
@@ -294,15 +294,13 @@ int write_zero_byte(int num_bytes, exec exec){
 }
 
 int write_header(exec exec, token *ptr){
-    
     // Magic
     unsigned int magic[] = {swap_endian(COREWAR_EXEC_MAGIC)};
     if (!fwrite(magic, sizeof(unsigned int), 1, exec.fp)){
         return -1;
     }
-    
-    // .name
-    if (strcmp(ptr->str, ".name") == 0 && ptr->next->id == LITERAL){
+    // name
+    if (strcmp(ptr->str, NAME_CMD_STRING) == 0 && ptr->next->id == LITERAL){
         ptr = ptr->next;
         fwrite(ptr->str, sizeof(char), ptr->len, exec.fp);
         int name_padding = PROG_NAME_LENGTH + 4 - (ptr->len);
@@ -310,10 +308,10 @@ int write_header(exec exec, token *ptr){
     } else {
         return -1;
     }
-
-    write_zero_byte(4, exec); // replace this with prog_size??
-
-    if (strcmp(ptr->next->str, ".comment") == 0 && ptr->next->next->id == LITERAL){
+    // prog size
+    write_zero_byte(4, exec); 
+    // comment
+    if (strcmp(ptr->next->str, COMMENT_CMD_STRING) == 0 && ptr->next->next->id == LITERAL){
         ptr = ptr->next->next;
         fwrite(ptr->str, sizeof(char), ptr->len, exec.fp);
         int comment_padding = COMMENT_LENGTH + 4 - (ptr->len);
@@ -321,18 +319,6 @@ int write_header(exec exec, token *ptr){
     } else {
         return -1;
     }
-
-
-
-
-    
-    // NULL
-
-
-    // .comment
-
-
-    // NULL
 
     return 0;
 }
@@ -412,10 +398,6 @@ int scan_src(char *av){
     exec exec = init_exec(av);
     token *ptr = list.head;    
     write_exec(exec, ptr);
-
-
-    
-
 
     wrap_up(src, exec, &list);
     return 0;        

@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <string.h> // replace with original implementations
 
-#include "../include/op.h"
+#include "../inc/op.h"
 
 #define TAB_CHAR 9
 #define DOUBLE_QUOTE 34

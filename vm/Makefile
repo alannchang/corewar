@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 TARGET = vm
-=======
-TARGET = asm
->>>>>>> ad6019edf18938d7fb42b5e68fe7bb9e4b214d51
 TEST = test
 
 OBJ_DIR = obj

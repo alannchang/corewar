@@ -17,3 +17,8 @@ General virtual machine strategy (work in progress)
 */
 
 #include "../inc/vm.h"
+
+int main()
+{
+    return 0;
+}

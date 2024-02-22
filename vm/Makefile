@@ -1,4 +1,4 @@
-TARGET = my_project
+TARGET = vm
 TEST = test
 
 OBJ_DIR = obj
@@ -18,7 +18,7 @@ TEST_OBJ = $(patsubst $(TEST_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_SRC)) # list all t
 SUB_MOD_DIR = submodules
 GTEST_DIR = $(SUB_MOD_DIR)/googletest/googletest
 
-INC_DIR = include
+INC_DIR = inc
 
 # CFLAGS = -Wall -Wextra -g3 -Werror
 CFLAGS = -Wall -Wextra -g3 -Werror -fsanitize=address
